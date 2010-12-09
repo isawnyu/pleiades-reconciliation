@@ -1,3 +1,5 @@
+import re
+
 import simplejson
 
 from Products.CMFCore.utils import getToolByName
@@ -22,17 +24,27 @@ class ReconciliationEndpoint(BrowserPage):
         if limit > 20: limit = 20
         type = form.get('type')
 
+        query = re.sub(r'\([\.\w]+\)', r'*', query)
+        query = re.sub(r'^[^"\w*-]', '', query)
+        query = re.sub(r'[^"\w*-]$', '', query)
         data = dict(SearchableText=query)
+
         if type:
             data['portal_type'] = [type.capitalize()]
         else:
             data['portal_type'] = ['Location', 'Name', 'Place']
-        if limit:
-            data['sort_limit'] = limit
-            hits = catalog.searchResults(data)[:limit]
-        else:
-            hits = catalog.searchResults(data)
 
+        try:
+            if limit:
+                data['sort_limit'] = limit
+                hits = catalog.searchResults(data)[:limit]
+            else:
+                hits = catalog.searchResults(data)
+        except Exception, e:
+            self.request.response.setStatus(500)
+            self.request.response.setHeader('Content-Type', 'text/plain')
+            return str(e) + "\n"
+            
         result = [dict(
                     id=self.relPath(m, b.getPath()), 
                     name=b.Title,
