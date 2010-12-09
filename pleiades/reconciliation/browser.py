@@ -5,6 +5,24 @@ import simplejson
 from Products.CMFCore.utils import getToolByName
 from zope.publisher.browser import BrowserPage
 
+try:
+    import Missing
+    mv = Missing.Value
+except ImportError:
+    mv = None
+
+def catalog_geometry(catalog, brain):
+    zg = brain.zgeo_geometry
+    if zg is mv or None:
+        return None
+    else:
+        idx_data = catalog.getIndexDataForRID(brain.getRID())
+        precision = idx_data.get('location_precision')
+        relation = {}
+        if 'rough' in precision:
+            relation.update(relation='relates')
+        return dict(zg.items() + relation.items())
+
 
 class ReconciliationEndpoint(BrowserPage):
 
@@ -51,6 +69,7 @@ class ReconciliationEndpoint(BrowserPage):
                     description=b.Description,
                     type=b.portal_type,
                     uid=b.UID,
+                    geometry=catalog_geometry(catalog, b),
                     ) for b in hits]
         self.request.response.setStatus(200)
         self.request.response.setHeader('Content-Type', 'application/json')
