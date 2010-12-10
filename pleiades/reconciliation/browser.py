@@ -45,7 +45,7 @@ class ReconciliationEndpoint(BrowserPage):
         query = re.sub(r'\([\.\w]+\)', r'*', query)
         query = re.sub(r'^[^"\w*-]', '', query)
         query = re.sub(r'[^"\w*-]$', '', query)
-        data = dict(SearchableText=query)
+        data = dict(Title=query)
 
         if type:
             data['portal_type'] = [type.capitalize()]
