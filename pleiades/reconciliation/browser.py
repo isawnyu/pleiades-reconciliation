@@ -37,20 +37,36 @@ class ReconciliationEndpoint(BrowserPage):
        
         form = self.request.form
         query = form.get('query')
-        assert query is not None, "No query"
         limit = int(form.get('limit', 20))
         if limit > 20: limit = 20
         type = form.get('type')
+        
+        # Experimental spatial search
+        spatial = form.get('bbox') # or form.get('near')
+
+        assert (query or spatial) is not None, "No query"
 
         query = re.sub(r'\([\.\w]+\)', r'*', query)
         query = re.sub(r'^[^"\w*-]', '', query)
         query = re.sub(r'[^"\w*-]$', '', query)
-        data = dict(Title=query)
+        data = dict(SearchableText=query)
 
         if type:
             data['portal_type'] = [type.capitalize()]
         else:
             data['portal_type'] = ['Location', 'Name', 'Place']
+
+        if spatial:
+            coords = map(float, spatial.split(","))
+            if 'bbox' in form.keys():
+                qcoords = coords
+                qrange = 'intersection'
+            # TODO: get bugs out of Pleiades spatial index before we 
+            # turn this option back on.
+            #elif 'near' in form.keys():
+            #    qcoords = (coords, )
+            #    qrange = 'nearest'
+            data['where'] = {'query': qcoords, 'range': qrange}
 
         try:
             if limit:
