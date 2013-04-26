@@ -13,7 +13,7 @@ except ImportError:
 
 def catalog_geometry(catalog, brain):
     zg = brain.zgeo_geometry
-    if zg is mv or None:
+    if zg in (mv, None):
         return None
     else:
         idx_data = catalog.getIndexDataForRID(brain.getRID())
@@ -84,7 +84,6 @@ class ReconciliationEndpoint(BrowserPage):
                     name=b.Title,
                     description=b.Description,
                     type=b.portal_type,
-                    uid=b.UID,
                     geometry=catalog_geometry(catalog, b),
                     ) for b in hits]
         self.request.response.setStatus(200)
